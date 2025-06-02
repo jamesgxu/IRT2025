@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% block title %}Create or Select Profile{% endblock %}
+
+{% block header %}
+<h2>Select or Create a Profile</h2>
+{% endblock %}
+
+{% block content %}
+<!-- Profile Selector -->
+<form method="POST" id="profileSelector">
+  <div class="form-row">
+    <label for="existing_profile">Use Existing Profile</label>
+    <select name="existing_profile" id="existing_profile" onchange="loadProfile(this)">
+      <option value="">-- Select a profile --</option>
+      {% for profile in profiles %}
+      <option value="{{ profile['id'] }}">{{ profile['name'] }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <button name="use_existing" value="1" type="submit" id="continueBtn" style="display:none;">Continue</button>
+</form>
+
+<hr>
+
+<!-- View Existing Profile Info -->
+<div id="viewProfile" style="display:none;">
+  <h3>Selected Profile Details</h3>
+  <div id="profileDetails" class="profile-display"></div>
+</div>
+
+<!-- Create New Profile -->
+<form method="POST" id="createForm">
+  <div class="form-row">
+    <label for="profile_name">Profile Name</label>
+    <input name="profile_name" id="profile_name" required>
+  </div>
+  <div class="form-row">
+    <label for="directory">Directory</label>
+    <input name="directory" id="directory" required>
+  </div>
+  <div class="form-row">
+    <label for="base_name">Base Name</label>
+    <input name="base_name" id="base_name" required>
+  </div>
+  <div class="form-row">
+    <label for="channels">Channels</label>
+    <input name="channels" id="channels" required>
+  </div>
+  <div class="form-row">
+    <label for="gastruloid_min_size">Minimum Gastruloid Size</label>
+    <input type="number" name="gastruloid_min_size" id="gastruloid_min_size" value="6000" required>
+  </div>
+
+  <fieldset class="form-group">
+    <legend>Channel Suffixes</legend>
+    <div class="form-grid-3">
+      <div>
+        <label for="dapi_suffix">DAPI</label>
+        <input name="dapi_suffix" id="dapi_suffix" required>
+      </div>
+      <div>
+        <label for="red_suffix">Red</label>
+        <input name="red_suffix" id="red_suffix" required>
+      </div>
+      <div>
+        <label for="green_suffix">Green</label>
+        <input name="green_suffix" id="green_suffix" required>
+      </div>
+      <div>
+        <label for="cyan_suffix">Cyan</label>
+        <input name="cyan_suffix" id="cyan_suffix" required>
+      </div>
+    </div>
+  </fieldset>
+
+  <fieldset class="form-group">
+    <legend>Channel Markers</legend>
+    <div class="form-grid-3">
+      <div>
+        <label for="red_marker">Red</label>
+        <input name="red_marker" id="red_marker" required>
+      </div>
+      <div>
+        <label for="green_marker">Green</label>
+        <input name="green_marker" id="green_marker" required>
+      </div>
+      <div>
+        <label for="cyan_marker">Cyan</label>
+        <input name="cyan_marker" id="cyan_marker" required>
+      </div>
+    </div>
+  </fieldset>
+
+  <button type="submit" id="submitBtn">Save Profile</button>
+</form>
+
+<script>
+  async function loadProfile(select) {
+    const id = select.value;
+    const createForm = document.getElementById('createForm');
+    const viewProfile = document.getElementById('viewProfile');
+    const details = document.getElementById('profileDetails');
+    const continueBtn = document.getElementById('continueBtn');
+
+    if (!id) {
+      createForm.style.display = 'block';
+      viewProfile.style.display = 'none';
+      continueBtn.style.display = 'none';
+      return;
+    }
+
+    const res = await fetch(`/setup/api/profile/${id}`);
+    const data = await res.json();
+
+    // Populate and show the profile details as plain text
+    let html = '<ul>';
+    for (const [key, value] of Object.entries(data)) {
+      if (key !== 'id') {
+        html += `<li><strong>${key.replaceAll('_', ' ')}:</strong> ${value}</li>`;
+      }
+    }
+    html += '</ul>';
+
+    details.innerHTML = html;
+    viewProfile.style.display = 'block';
+    createForm.style.display = 'none';
+    continueBtn.style.display = 'inline-block';
+  }
+</script>
+
+{% endblock %}

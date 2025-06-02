@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block title %}Loading...{% endblock %}
+
+{% block header %}
+  <h2>Processing Your Request</h2>
+{% endblock %}
+
+{% block content %}
+  <p>The following profile has been loaded into session:</p>
+
+  <ul>
+    {% for key, value in profile.items() if key != 'id' %}
+      <li><strong>{{ key.replace('_', ' ').title() }}:</strong> {{ value }}</li>
+    {% endfor %}
+  </ul>
+
+  <p>This is where your script or processing pipeline would begin.</p>
+{% endblock %}

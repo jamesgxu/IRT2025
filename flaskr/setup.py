@@ -1,6 +1,8 @@
+import datetime
 import functools
+import os
 
-from utils import preprocessing
+from .utils import preprocessing, gastruloid_processing, normalize, plot_results
 from flask import (
     Blueprint, flash, g, redirect, render_template, request, session, url_for
 )
@@ -83,12 +85,14 @@ def prompt():
             error = 'green_marker is required.'
         elif not cyan_marker:
             error = 'cyan_marker is required.'
+        elif not gastruloid_min_size:
+            error = 'gastruloid_min_size is required.'
 
         if error is None:
             try:
                 cursor = db.execute(
                     """
-                    INSERT INTO profile (
+                    INSERT INTO profiles (
                         name, directory, base_name, channels,
                         dapi_suffix, red_suffix, green_suffix, cyan_suffix,
                         red_marker, green_marker, cyan_marker,
@@ -120,18 +124,30 @@ def prompt():
 @bp.route('/loading')
 def loading():
     profile_id = session.get('profile_id')
+    if not profile_id:
+        flash("No profile selected or created.")
+        return redirect(url_for('setup.prompt'))
 
+    profile = get_db().execute(
+        "SELECT * FROM profiles WHERE id = ?", (profile_id,)
+    ).fetchone()
+
+    return render_template("setup/loading.html", profile=dict(profile))  # Just shows "Loading..." splash
+
+
+@bp.route('/process')
+def process():
+    profile_id = session.get('profile_id')
     if not profile_id:
         flash("No profile selected or created.")
         return redirect(url_for('setup.prompt'))
 
     db = get_db()
     profile = db.execute("SELECT * FROM profiles WHERE id = ?", (profile_id,)).fetchone()
-
     if profile is None:
         flash("Profile not found.")
         return redirect(url_for('setup.prompt'))
-    
+
     directory = profile['directory']
     channels = int(profile['channels'])
 
@@ -140,12 +156,43 @@ def loading():
     except Exception as e:
         flash(str(e))
         return redirect(url_for("setup.prompt"))
-    
 
+    channel_name_responses = {
+        'dapi': profile['dapi_suffix'],
+        'red': profile['red_suffix'],
+        'green': profile['green_suffix'],
+        'cyan': profile['cyan_suffix']
+    }
 
-    
+    marker_name_responses = {
+        'red': profile['red_marker'],
+        'green': profile['green_marker'],
+        'cyan': profile['cyan_marker']
+    }
 
-    return render_template("setup/loading.html", profile=dict(profile))
+    results_table, blue_int, red_int, green_int, cyan_int = gastruloid_processing.process_all_image_sets(
+        num_sets,
+        profile['base_name'],
+        directory,
+        channel_name_responses,
+        marker_name_responses,
+        profile['gastruloid_min_size'],
+    )
+
+    results_table, a_blue, a_red, a_green, a_cyan = normalize.run(
+        results_table, blue_int, red_int, green_int, cyan_int
+    )
+
+    profile_name = profile['name']
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    results_dir = os.path.join(
+        os.path.dirname(__file__), 'static', 'results', f"{profile_name}_{timestamp}"
+    )
+    os.makedirs(results_dir, exist_ok=True)
+
+    plot_results.run(results_table, a_blue, a_red, a_green, a_cyan, marker_name_responses, num_sets, results_dir)
+
+    return redirect(url_for('show_results', profile_name=profile_name, timestamp=timestamp))
 
 @bp.route('/session-debug')
 def session_debug():

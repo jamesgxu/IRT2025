@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 def preprocess_directory(directory_path: str, num_channels: int, min_file_size: int = 5000):
     """
@@ -14,7 +15,7 @@ def preprocess_directory(directory_path: str, num_channels: int, min_file_size: 
         image_files (list): List of valid image file names (sorted).
     """
     # Make sure directory exists
-    if not os.path.isdir(directory_path):
+    if not os.path.isdir(Path(directory_path)):
         raise FileNotFoundError(f"Directory '{directory_path}' does not exist.")
 
     # Get all files in directory with file size > 5000 bytes

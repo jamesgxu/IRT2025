@@ -15,4 +15,4 @@ CREATE TABLE profiles (
     cyan_marker TEXT NOT NULL
 );
 
-ALTER TABLE profile ADD COLUMN gastruloid_min_size INTEGER NOT NULL DEFAULT 6000;
+ALTER TABLE profiles ADD COLUMN gastruloid_min_size INTEGER NOT NULL DEFAULT 6000;

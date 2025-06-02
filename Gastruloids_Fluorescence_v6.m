@@ -92,7 +92,8 @@ if exist('DefaultGastruloidMinSize','var') == 0 %Checks to see if the code has a
 DefaultGastruloidMinSize = "6000"; %This is the default output of the user prompt, update this line as needed for ease of use.
 end
 
-GastruloidMinSize = inputdlg("What would you like the minimum filter size be for selecting the Gastruloid?","Gastruloid Processing Specifications",1,DefaultGastruloidMinSize,options); %User input for changing the Gastruloid Filtering Size of small objects, allows for easy reprocessing without changing the source code.
+options = {'OK','Cancel'}; % Defines options for the input dialog buttons.
+GastruloidMinSize = inputdlg("What would you like the minimum filter size be for selecting the Gastruloid?","Gastruloid Processing Specifications",1,{DefaultGastruloidMinSize},options); %User input for changing the Gastruloid Filtering Size of small objects, allows for easy reprocessing without changing the source code.
 DefaultGastruloidMinSize = GastruloidMinSize; %Updates the default variable for running the code additional times in this session.
 GastruloidMinSize = str2double(cell2mat(GastruloidMinSize)); %Converts the user input for the gastruloid min size to a number.
 
@@ -476,6 +477,7 @@ end %Ends the for loop.
 
 fprintf('Generating final plots. \n')
 
+xScale2 = linspace(0, 10, 10000)
 figure(Number_Image_Sets+1) %Creates a new figure to plot all of the DAPI data.
 hold on %Allows multiple data sets to be plotted on one graph without overwriting each other.
 plot(xScale2,A_Blue_Results,'LineWidth',0.5,'Color','black') %Plots the individual image set data as black lines.
